@@ -1,0 +1,47 @@
+{
+	"compilerOptions": {
+
+		"target": "es2021",
+		"module": "commonjs",
+
+		"outDir": "./build",
+		"rootDir": ".",
+		"strict": true,
+		"strictPropertyInitialization": false,
+		"moduleResolution": "node",
+		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true,
+
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"esModuleInterop": true,
+
+		"skipLibCheck": false,
+		"forceConsistentCasingInFileNames": true,
+
+		"baseUrl": ".",
+		"paths": {
+
+			"@types": ["src/utils/types"],
+			"@decorators": ["src/utils/decorators"],
+			"@errors": ["src/utils/errors"],
+			"@entities": ["src/entities"],
+			"@guards": ["src/guards"],
+			"@services": ["src/services"],
+			"@i18n": ["src/i18n"],
+			"@config": ["src/config"],
+			
+			"@core/*": ["src/core/*"],
+			"@utils/*": ["src/utils/*"],
+			"@api/*": ["src/api/*"]
+		}
+	},
+
+	"include": ["src", "**/*.ts"],
+	"exclude": ["build", "node_modules", "tests"],
+	"paths": ["node_modules/*", "src/utils/types/*"],
+
+	"ts-node": {
+		"require": ["tsconfig-paths/register"]
+	}
+}
