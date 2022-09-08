@@ -1,7 +1,7 @@
 {
     "apps": [
         {
-            "name": "My Discord Bot",
+            "name": "Lab Bot",
             "script": "npm",
             "args" : "run build:serve"
         }
