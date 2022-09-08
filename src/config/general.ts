@@ -28,12 +28,12 @@ export const generalConfig: GeneralConfigType = {
 
     activities: [
 		{
-			text: 'discord.js v14',
+			text: 'with lines of code',
 			type: 'PLAYING'
 		},
 		{
-			text: 'some knowledge',
-			type: 'STREAMING'
+			text: 'the new JS framework of the week',
+			type: 'WATCHING'
 		}
 	]
 
