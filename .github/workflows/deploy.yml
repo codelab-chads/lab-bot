@@ -31,4 +31,4 @@ jobs:
           script: |
             cd $PROJECT_PATH
             git pull https://github.com/barthofu/lab-bot.git main
-            docker-compose up -d --build
+            pm2 restart pm2.config.json
