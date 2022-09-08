@@ -10,9 +10,9 @@ export const generalConfig: GeneralConfigType = {
 	timezone: 'Europe/Paris',
 
 	links: {
-		invite: 'https://www.change_invite_link_here.com',
-		supportServer: 'https://discord.com/your_invitation_link',
-		gitRemoteRepo: 'https://github.com/barthofu/tscord',
+		invite: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		supportServer: 'https://discord.gg/MqP9aDM3S6',
+		gitRemoteRepo: 'https://github.com/barthofu/lab-bot',
 	},
 	
 	automaticUploadImagesToImgur: false,
