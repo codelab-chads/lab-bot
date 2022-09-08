@@ -95,3 +95,20 @@ type WebsocketConfigType = {
 
     enabled: boolean
 }
+
+type SelectorConfig = {
+
+    content: string,
+    roles: Array<{
+        name: string,
+        roleId: string,
+        description?: string,
+        icon?: string
+    }>
+}
+
+type RolesConfigType = {
+       
+    programmingLanguages: SelectorConfig
+    sector: SelectorConfig
+}

@@ -2,9 +2,9 @@ export const generalConfig: GeneralConfigType = {
 
     __templateVersion: '1.1.0',
 
-	name: 'tscord',
+	name: 'lab-bot',
 	description: '',
-	defaultLocale: 'en',
+	defaultLocale: 'fr',
 	simpleCommandsPrefix: '!',
 	ownerId: '260908777446965248',
 	timezone: 'Europe/Paris',
@@ -22,7 +22,7 @@ export const generalConfig: GeneralConfigType = {
 	],
 
 	eval: {
-		name: 'bot',
+		name: 'lab-bot',
 		onlyOwner: false
 	},
 
@@ -41,5 +41,5 @@ export const generalConfig: GeneralConfigType = {
 
 export const colorsConfig = {
 
-	primary: '#2F3136'
+	primary: '#bb69ea'
 }

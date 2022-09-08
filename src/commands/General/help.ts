@@ -16,6 +16,7 @@ export default class HelpCommand {
 		this.loadCategories()
 	}
 
+	@Slash({ name: 'help2'})
 	@Slash({ 
 		name: 'help'
     })
