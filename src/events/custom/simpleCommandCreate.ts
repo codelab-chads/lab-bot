@@ -1,11 +1,11 @@
-import { ArgsOf, Client, Guard, SimpleCommandMessage } from 'discordx'
-import { injectable } from 'tsyringe'
+import { ArgsOf, Client, Guard, SimpleCommandMessage } from "discordx"
+import { inject, injectable, delay, container } from "tsyringe"
 
-import { On, Discord } from '@decorators'
-import { Stats, Logger, Database } from '@services'
-import { Guild, User } from '@entities'
-import { Maintenance } from '@guards'
-import { getPrefixFromMessage, syncUser } from '@utils/functions'
+import { Discord, On, OnCustom } from "@decorators"
+import { Guild, User } from "@entities"
+import { Maintenance } from "@guards"
+import { Database, EventManager, Logger, Stats } from "@services"
+import { getPrefixFromMessage, resolveDependency, syncUser } from "@utils/functions"
 
 @Discord()
 @injectable()
@@ -14,22 +14,23 @@ export default class SimpleCommandCreateEvent {
     constructor(
         private stats: Stats,
         private logger: Logger,
-        private db: Database
+        private db: Database,
+        private eventManager: EventManager    
     ) {}
 
     // =============================
-    // ========= Handlers ==========
+    // ========= Handler ===========
     // =============================
 
-    @On('simpleCommandCreate')
-    async simpleCommandCreateHandler([command]: [SimpleCommandMessage]) {
+    @OnCustom('simpleCommandCreate')
+    async simpleCommandCreateHandler(command: SimpleCommandMessage) {
 
         // insert user in db if not exists
         await syncUser(command.message.author)
 
         // update last interaction time of both user and guild
-        await this.db.getRepo(User).updateLastInteract(command.message.author.id)
-        await this.db.getRepo(Guild).updateLastInteract(command.message.guild?.id)
+        await this.db.get(User).updateLastInteract(command.message.author.id)
+        await this.db.get(Guild).updateLastInteract(command.message.guild?.id)
 
         await this.stats.registerSimpleCommand(command)
         this.logger.logInteraction(command)
@@ -56,7 +57,7 @@ export default class SimpleCommandCreateEvent {
             /**
              * @param {SimpleCommandMessage} command
              */
-            client.emit('simpleCommandCreate', command)
+            this.eventManager.emit('simpleCommandCreate', command)
         }
     } 
 }

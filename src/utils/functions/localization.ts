@@ -1,6 +1,5 @@
-import { loadedLocales, locales } from "@i18n"
-import type { Locales } from "@i18n"
-import { generalConfig } from "@config"
+import { generalConfig } from "@configs"
+import { L, loadedLocales, Locales, locales } from "@i18n"
 
 export const getLocalizedInfo = (target: 'NAME' | 'DESCRIPTION', localizationSource: TranslationsNestedPaths) => {
 
@@ -52,7 +51,7 @@ export const sanitizeLocales = <K extends SanitizedOptions>(option: K) => {
 
 export const getLocalizationFromPathString = (path: TranslationsNestedPaths, locale?: Locales) => {
 
-    const pathArray = path.split('.')
+    const pathArray = path?.split('.') || []
     let currentLocalization: any = loadedLocales[locale ?? generalConfig.defaultLocale]
 
     for (const pathNode of pathArray) {
@@ -61,4 +60,17 @@ export const getLocalizationFromPathString = (path: TranslationsNestedPaths, loc
     }
 
     return currentLocalization
+}
+
+export const setFallbackDescription = <K extends SanitizedOptions>(options: K & { description?: string }) => {
+
+    options.description = L[generalConfig.defaultLocale].SHARED.NO_COMMAND_DESCRIPTION()
+    if (!options.descriptionLocalizations) options.descriptionLocalizations = {}
+
+    for (const locale of locales) {
+        options.descriptionLocalizations[locale] = L[locale].SHARED.NO_COMMAND_DESCRIPTION()
+    }
+
+    return sanitizeLocales(options)
+
 }

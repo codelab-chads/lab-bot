@@ -1,9 +1,9 @@
-import { container, InjectionToken } from "tsyringe"
+import { CronJob } from "cron"
 import { isValidCron } from "cron-validator"
-import { CronJob } from 'cron'
+import { container, InjectionToken } from "tsyringe"
 
-import { generalConfig } from '@config'
-import { waitForDependency } from "@utils/functions"
+import { generalConfig } from "@configs"
+import { resolveDependency } from "@utils/functions"
 
 /**
  * Schedule a job to be executed at a specific time (cron)
@@ -19,6 +19,7 @@ export const Schedule = (cronExpression: string, jobName?: string) => {
 		propertyKey: string,
 		descriptor: PropertyDescriptor
 	) => {
+        
         // associate the context to the function, with the injected dependencies defined
         const oldDescriptor = descriptor.value
         descriptor.value = function(...args: any[]) {
@@ -35,7 +36,7 @@ export const Schedule = (cronExpression: string, jobName?: string) => {
         )
 
         import('@services').then(async services => {
-            const scheduler = await waitForDependency(services.Scheduler)
+            const scheduler = await resolveDependency(services.Scheduler)
             scheduler.addJob(jobName ?? propertyKey, job)
         })
 	}

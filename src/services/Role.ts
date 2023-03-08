@@ -1,8 +1,8 @@
 import { singleton } from "tsyringe"
 
 import { Client } from "discordx"
-import { ActionRowBuilder, SelectMenuBuilder, SelectMenuComponentOptionData, TextChannel } from "discord.js"
-import { rolesConfig } from "@config"
+import { ActionRowBuilder, StringSelectMenuBuilder, SelectMenuComponentOptionData, TextChannel } from "discord.js"
+import { rolesConfig } from "@configs"
 import { fetchMessageWithinChannelById } from "@utils/functions"
 
 @singleton()
@@ -31,9 +31,9 @@ export class Role {
 			emoji: role?.icon,
 		}))
 
-		const addRolesRow = new ActionRowBuilder<SelectMenuBuilder>()
+		const addRolesRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 			.addComponents(
-				new SelectMenuBuilder()
+				new StringSelectMenuBuilder()
 					.setCustomId(type === 'sector' ? 'sector-role-add' : 'prog-role-add')
 					.setPlaceholder('Ajouter des rôles')
 					.setMinValues(1)
@@ -43,9 +43,9 @@ export class Role {
 					)
 			)
 
-		const removeRolesRow = new ActionRowBuilder<SelectMenuBuilder>()
+		const removeRolesRow = new ActionRowBuilder<StringSelectMenuBuilder>()
 			.addComponents(
-				new SelectMenuBuilder()
+				new StringSelectMenuBuilder()
 					.setCustomId(type === 'sector' ? 'sector-role-remove' : 'prog-role-remove')
 					.setPlaceholder('Supprimer des rôles')
 					.setMinValues(1)

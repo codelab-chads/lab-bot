@@ -1,17 +1,23 @@
+import { Middleware } from "@tsed/common"
+import { InternalServerError } from "@tsed/exceptions"
 import axios from "axios"
-import { Context, Next } from "koa"
 
-import { apiConfig } from "@config"
+import { apiConfig } from "@configs"
 
-const baseUrl = `http://localhost:${apiConfig.port}`
+const baseUrl = `http://127.0.0.1:${apiConfig.port}`
 
-export async function botOnline(ctx: Context, next: Next) {
+@Middleware()
+export class BotOnline {
 
-    const { data } = await axios.get(`${baseUrl}/health/check`, {
-        params: {
-            logIgnore: true
-        }
-    })
+    async use() {
 
-    if (data?.online) return next()
+        const { data } = await axios.get(`${baseUrl}/health/check`, {
+            params: {
+                logIgnore: true
+            }
+        })
+    
+        if (!data?.online) throw new InternalServerError('Bot is offline')
+    }
+
 }

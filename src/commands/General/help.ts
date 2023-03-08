@@ -1,9 +1,9 @@
-import { Client, MetadataStorage, SelectMenuComponent } from "discordx"
 import { Category } from "@discordx/utilities"
-import { Formatters, ActionRowBuilder, EmbedBuilder, SelectMenuBuilder, APISelectMenuOption, CommandInteraction, SelectMenuInteraction } from "discord.js"
+import { ActionRowBuilder, APISelectMenuOption, CommandInteraction, EmbedBuilder, inlineCode, StringSelectMenuBuilder, StringSelectMenuInteraction  } from "discord.js"
+import { Client, MetadataStorage, SelectMenuComponent } from "discordx"
 
 import { Discord, Slash } from "@decorators"
-import { chunkArray, getColor, validString } from "@utils/functions"
+import { chunkArray, getColor, resolveGuild, validString } from "@utils/functions"
 import { TranslationFunctions } from "src/i18n/i18n-types"
 
 @Discord()
@@ -16,7 +16,6 @@ export default class HelpCommand {
 		this.loadCategories()
 	}
 
-	@Slash({ name: 'help2'})
 	@Slash({ 
 		name: 'help'
     })
@@ -26,7 +25,7 @@ export default class HelpCommand {
 		{ localize }: InteractionData
 	) {
 		
-		const embed = this.getEmbed({ client, interaction, locale: localize })
+		const embed = await this.getEmbed({ client, interaction, locale: localize })
 
 		let components: any[] = []
 		components.push(this.getSelectDropdown("categories", localize).toJSON())
@@ -40,13 +39,13 @@ export default class HelpCommand {
 	@SelectMenuComponent({
 		id: 'help-category-selector'
 	})
-	async selectCategory(interaction: SelectMenuInteraction, client: Client, { localize }: InteractionData) {
+	async selectCategory(interaction: StringSelectMenuInteraction, client: Client, { localize }: InteractionData) {
 
         const category = interaction.values[0]
 
         const embed = await this.getEmbed({ client, interaction, category, locale: localize })
 		let components: any[] = []
-		components.push(this.getSelectDropdown("categories", localize).toJSON())
+		components.push(this.getSelectDropdown(category, localize).toJSON())
 
         interaction.update({
             embeds: [embed],
@@ -55,13 +54,13 @@ export default class HelpCommand {
     }
 
 
-	private getEmbed({ client, interaction, category = '', pageNumber = 0, locale }: {
+	private async getEmbed({ client, interaction, category = '', pageNumber = 0, locale }: {
 		client: Client, 
-		interaction: CommandInteraction | SelectMenuInteraction,  
+		interaction: CommandInteraction | StringSelectMenuInteraction ,  
 		category?: string,
 		pageNumber?: number
 		locale: TranslationFunctions
-	}): EmbedBuilder {
+	}): Promise<EmbedBuilder> {
 
 		const commands = this._categories.get(category)
 		
@@ -77,10 +76,28 @@ export default class HelpCommand {
 				.setThumbnail('https://upload.wikimedia.org/wikipedia/commons/a/a4/Cute-Ball-Help-icon.png')
 				.setColor(getColor('primary'))
 
+			let currentGuild = resolveGuild(interaction)
+			let applicationCommands = [
+				...(currentGuild ? (await currentGuild.commands.fetch()).values() : []),
+				...(await client.application!.commands.fetch()).values()
+			]
+			
 			for (const category of this._categories) {
+				
+				let commands = category[1]
+					.map(cmd => {
+						return "</" +
+								(cmd.group ? cmd.group + ' ' : '') +
+								(cmd.subgroup ? cmd.subgroup + ' ' : '') +
+								cmd.name +
+								":" +
+								applicationCommands.find(acmd => acmd.name == (cmd.group ? cmd.group : cmd.name))!.id +
+								">"	
+					})
+					
 				embed.addFields([{
 					name: category[0],
-					value: category[1].map(command => command.name).join(', ')
+					value: commands.join(', ')
 				}])
 			}
 
@@ -106,13 +123,24 @@ export default class HelpCommand {
 
 		for (const item of resultsOfPage) {
 
+			let currentGuild = resolveGuild(interaction)
+			let applicationCommands = [
+				...(currentGuild ? (await currentGuild.commands.fetch()).values() : []),
+				...(await client.application!.commands.fetch()).values()
+			]
+
 			const { description } = item
 			const fieldValue = validString(description) ? description : "No description"
-			const name = `/${item.group ? item.group + ' ' : ''}${item.subgroup ? item.subgroup + ' ' : ''}${item.name}`
-			const nameToDisplay = Formatters.inlineCode(name)
+			const name = 	"</" +
+							(item.group ? item.group + ' ' : '') +
+							(item.subgroup ? item.subgroup + ' ' : '') +
+							item.name +
+							":" +
+							applicationCommands.find(acmd => acmd.name == (item.group ? item.group : item.name))!.id +
+							">"	
 
 			embed.addFields([{
-				name: 	nameToDisplay,
+				name: 	name,
 				value: 	fieldValue,
 				inline:	resultsOfPage.length > 5
 			}])
@@ -143,7 +171,7 @@ export default class HelpCommand {
             })
         }
 
-        const selectMenu = new SelectMenuBuilder().addOptions(optionsForEmbed).setCustomId("help-category-selector")
+        const selectMenu = new StringSelectMenuBuilder().addOptions(optionsForEmbed).setCustomId("help-category-selector")
         
 		return new ActionRowBuilder().addComponents(selectMenu)
     }

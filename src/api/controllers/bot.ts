@@ -1,34 +1,38 @@
-import { Delete, Get, Middleware, Post, Router } from "@discordx/koa"
-import { Client } from "discordx"
-import { Context } from "koa"
-import { injectable } from "tsyringe"
-import { Joi } from 'koa-context-validator'
+import { BodyParams, Controller, Delete, Get, PathParams, Post, UseBefore } from "@tsed/common"
+import { NotFound, Unauthorized } from "@tsed/exceptions"
+import { Required } from "@tsed/schema"
+import { BaseGuildTextChannel, BaseGuildVoiceChannel, ChannelType, NewsChannel, PermissionsBitField } from "discord.js"
+import { Client, MetadataStorage } from "discordx"
 
-import { BaseController } from "@utils/classes"
-import { authenticated, botOnline, validator } from "@api/middlewares"
-import { BaseGuildTextChannel, BaseGuildVoiceChannel, Channel, ChannelType, Guild as DGuild, GuildTextBasedChannel, NewsChannel, PermissionsBitField, User as DUser } from "discord.js"
-import { generalConfig } from "@config"
-import { getDevs, isDev, isInMaintenance, setMaintenance } from "@utils/functions"
+import { Authenticated, BotOnline } from "@api/middlewares"
+import { generalConfig } from "@configs"
+import { Guild, User } from "@entities"
 import { Database } from "@services"
-import { Guild, User } from '@entities'
+import { BaseController } from "@utils/classes"
+import { getDevs, isDev, isInMaintenance, resolveDependencies, setMaintenance } from "@utils/functions"
 
-@Router({ options: { prefix: '/bot' }})
-@Middleware(
-    botOnline,
-    authenticated
+@Controller('/bot')
+@UseBefore(
+    BotOnline,
+    Authenticated
 )
-@injectable()
 export class BotController extends BaseController {
 
-    constructor(
-        private readonly client: Client,
-        private readonly db: Database
-    ) {
+    
+    private client: Client
+    private db: Database
+
+    constructor() {
         super()
+
+        resolveDependencies([Client, Database]).then(([client, db]) => {
+            this.client = client
+            this.db = db
+        })
     }
 
     @Get('/info')
-    async info(ctx: Context) {
+    async info() {
 
         const user: any = this.client.user?.toJSON()
         if (user) {
@@ -36,25 +40,23 @@ export class BotController extends BaseController {
             user.bannerURL = this.client.user?.bannerURL()
         }
 
-        const body = {
+        return {
             user,
-            owner: (await this.client.users.fetch(generalConfig.ownerId)).toJSON(),
+            owner: (await this.client.users.fetch(generalConfig.ownerId).catch(() => null))?.toJSON(),
         }
-
-        this.ok(ctx, body)
     }
 
 
     @Get('/commands')
-    async commands(ctx: Context) {
+    async commands() {
 
-        const commands = this.client.applicationCommands
+        const commands = MetadataStorage.instance.applicationCommands
 
-        this.ok(ctx, commands)
+        return commands.map(command => command.toJSON())
     }
 
     @Get('/guilds')
-    async guilds(ctx: Context) {
+    async guilds() {
 
         const body: any[] = []
 
@@ -64,7 +66,7 @@ export class BotController extends BaseController {
             discordGuild.iconURL = discordRawGuild.iconURL()
             discordGuild.bannerURL = discordRawGuild.bannerURL()
 
-            const databaseGuild = await this.db.getRepo(Guild).findOne({ id: discordGuild.id })
+            const databaseGuild = await this.db.get(Guild).findOne({ id: discordGuild.id })
 
             body.push({
                 discord: discordGuild,
@@ -72,82 +74,72 @@ export class BotController extends BaseController {
             })
         }
 
-        this.ok(ctx, body)
+        return body
     }
 
     @Get('/guilds/:id')
-    async guild(ctx: Context) {
-
-        const { id } = <{ id: string }>ctx.params
+    async guild(@PathParams('id') id: string) {
 
         // get discord guild
-        const discordRawGuild = await this.client.guilds.fetch(id)
-        if (!discordRawGuild) {
-            this.error(ctx, 'Guild not found', 404)
-            return
-        }
+        const discordRawGuild = await this.client.guilds.fetch(id).catch(() => null)
+        if (!discordRawGuild) throw new NotFound('Guild not found')
+
         const discordGuild: any = discordRawGuild.toJSON()
         discordGuild.iconURL = discordRawGuild.iconURL()
         discordGuild.bannerURL = discordRawGuild.bannerURL()
 
         // get database guild
-        const databaseGuild = await this.db.getRepo(Guild).findOne({ id })
+        const databaseGuild = await this.db.get(Guild).findOne({ id })
 
-        const body = {
+        return {
             discord: discordGuild,
             database: databaseGuild
         }
-
-        this.ok(ctx, body)
     }
 
     @Delete('/guilds/:id')
-    async deleteGuild(ctx: Context) {
+    async deleteGuild(@PathParams('id') id: string) {
 
-        const { id } = <{ id: string }>ctx.params
-
-        const guild = await this.client.guilds.fetch(id)
-        if (!guild) {
-            this.error(ctx, 'Guild not found', 404)
-            return
-        }
+        const guild = await this.client.guilds.fetch(id).catch(() => null)
+        if (!guild) throw new NotFound('Guild not found')
 
         await guild.leave()
 
-        this.ok(ctx, { success: true })
+        return {
+            success: true,
+            message: 'Guild deleted'
+        }
     }
 
     @Get('/guilds/:id/invite')
-    async invite(ctx: Context) {
+    async invite(@PathParams('id') id: string) {
 
-        const { id } = <{ id: string }>ctx.params
-
-        const guild = await this.client.guilds.fetch(id)
-        if (!guild) {
-            this.error(ctx, 'Guild not found', 404)
-            return
-        }
+        const guild = await this.client.guilds.fetch(id).catch(() => null)
+        if (!guild) throw new NotFound('Guild not found')
 
         const guildChannels = await guild.channels.fetch()
-        for (const channel of guildChannels.values()) {
-            if (
-                (guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.CreateInstantInvite) || false) &&
-                [ChannelType.GuildText, ChannelType.GuildVoice, ChannelType.GuildNews].includes(channel.type)
-            ) {
-                const invite = await (channel as BaseGuildTextChannel | BaseGuildVoiceChannel | NewsChannel | undefined)?.createInvite()
-                if(invite) { this.ok(ctx, invite); return }
 
-                this.error(ctx, 'Could not create an invite', 500)
-                return 
+        let invite: any
+        for (const channel of guildChannels.values()) {
+
+            if (
+                channel &&
+                (guild.members.me?.permissionsIn(channel).has(PermissionsBitField.Flags.CreateInstantInvite) || false) &&
+                [ChannelType.GuildText, ChannelType.GuildVoice, ChannelType.GuildAnnouncement].includes(channel.type)
+            ) {
+                invite = await (channel as BaseGuildTextChannel | BaseGuildVoiceChannel | NewsChannel | undefined)?.createInvite()
+                if (invite) break
             }
         }
 
-        this.error(ctx, 'Missing permission to create an invite in this guild', 401)
-        return 
+        if (invite) return invite.toJSON()
+        else {
+            throw new Unauthorized('Missing permission to create an invite in this guild')           
+        }
     }
 
     @Get('/users')
-    async users(ctx: Context) {
+    async users() {
 
         const users: any[] = [],
               guilds = this.client.guilds.cache.values()
@@ -163,7 +155,7 @@ export class BotController extends BaseController {
                     discordUser.iconURL = member.user.displayAvatarURL()
                     discordUser.bannerURL = member.user.bannerURL()
 
-                    const databaseUser = await this.db.getRepo(User).findOne({ id: discordUser.id })
+                    const databaseUser = await this.db.get(User).findOne({ id: discordUser.id })
 
                     users.push({
                         discord: discordUser,
@@ -173,98 +165,62 @@ export class BotController extends BaseController {
             }
         }
 
-        const body = users.map(user => user.toJSON())
-
-        this.ok(ctx, body)
+        return users
     }
 
     @Get('/users/:id')
-    async user(ctx: Context) {
+    async user(@PathParams('id') id: string) {
 
-        const { id } = <{ id: string }>ctx.params
-        
         // get discord user
-        const discordRawUser = await this.client.users.fetch(id)
-        if (!discordRawUser) {
-            this.error(ctx, 'User not found', 404)
-            return
-        }
+        const discordRawUser = await this.client.users.fetch(id).catch(() => null)
+        if (!discordRawUser) throw new NotFound('User not found')
+
         const discordUser: any = discordRawUser.toJSON()
         discordUser.iconURL = discordRawUser.displayAvatarURL()
         discordUser.bannerURL = discordRawUser.bannerURL()
         
         // get database user
-        const databaseUser = await this.db.getRepo(User).findOne({ id })
+        const databaseUser = await this.db.get(User).findOne({ id })
 
-        const body = {
+        return {
             discord: discordUser,
             database: databaseUser
         }
-
-        this.ok(ctx, body)
     }
 
-    @Get('/cachedUsers')
-    async cachedUsers(ctx: Context) {
+    @Get('/users/cached')
+    async cachedUsers() {
 
-        const body = {
-            users: this.client.users.cache.map(user => user.toJSON()),
-        }
-
-        this.ok(ctx, body)
+        return this.client.users.cache.map(user => user.toJSON())
     }
 
     @Get('/maintenance')
-    async maintenance(ctx: Context) {
+    async maintenance() {
 
-        const body = {
+        return {
             maintenance: await isInMaintenance(),
         }
-
-        this.ok(ctx, body)
     }
 
     @Post('/maintenance')
-    @Middleware(
-        validator({
-            body: Joi.object().keys({
-                maintenance: Joi.boolean().required()
-            })
-        })
-    )
-    async setMaintenance(ctx: Context) {
+    async setMaintenance(@Required() @BodyParams('maintenance') maintenance: boolean) {
 
-        const data = <{ maintenance: boolean }>ctx.request.body
-        await setMaintenance(data.maintenance)
+        await setMaintenance(maintenance)
 
-        const body = {
-            maintenance: data.maintenance,
+        return {
+            maintenance
         }
-
-        this.ok(ctx, body)
     }
 
     @Get('/devs')
-    async devs(ctx: Context) {
+    async devs() {
 
-        const body = getDevs()
-
-        this.ok(ctx, body)
+        return getDevs()
     }
 
     @Get('/devs/:id')
-    async dev(ctx: Context) {
+    async dev(@PathParams('id') id: string) {
 
-        const { id } = <{ id: string }>ctx.params
-
-        const body = isDev(id)
-
-        this.ok(ctx, body)
-    }
-
-    @Get('/test')
-    async test(ctx: Context) {
-
-        this.ok(ctx, { success: true })
+        return isDev(id)
     }
 }

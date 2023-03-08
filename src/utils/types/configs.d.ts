@@ -1,14 +1,14 @@
 type GeneralConfigType = {
 
-    __templateVersion: string
-
     name: string
     description: string
     defaultLocale: import('@i18n').Locales
-    simpleCommandsPrefix: string
     ownerId: string
     timezone: string
     automaticUploadImagesToImgur: boolean
+    
+    simpleCommandsPrefix: string
+    automaticDeferring: boolean
 
     links: {
 		invite: string

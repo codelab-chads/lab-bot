@@ -1,57 +1,57 @@
-import { Get, Router } from "@discordx/koa"
+import { Controller, Get } from "@tsed/common"
 import { Client } from "discordx"
-import { Context } from "koa"
-import { delay, inject, injectable } from "tsyringe"
 
-import { Database, Stats } from "@services"
 import { Data } from "@entities"
+import { Database, Stats } from "@services"
 import { BaseController } from "@utils/classes"
+import { resolveDependencies } from "@utils/functions"
 
-@Router({ options: { prefix: "/health" }})
-@injectable()
+@Controller('/health')
 export class HealthController extends BaseController {
 
-    constructor(
-        private readonly client: Client,
-        private readonly db: Database,
-        @inject(delay(() => Stats)) private readonly stats: Stats
-    ) {
+    private client: Client
+    private db: Database
+    private stats: Stats
+
+    constructor() {
         super()
+
+        resolveDependencies([Client, Database, Stats]).then(([client, db, stats]) => {
+            this.client = client
+            this.db = db
+            this.stats = stats
+        })
     }
 
     @Get('/check')
-    async healthcheck(ctx: Context) {
+    async healthcheck() {
 
-        const body = {
-            online: this.client.user?.presence.status !== "offline",
+        return {
+            online: this.client.user?.presence.status !== 'offline',
             uptime: this.client.uptime,
-            lastStartup: await this.db.getRepo(Data).get('lastStartup'),
+            lastStartup: await this.db.get(Data).get('lastStartup'),
         }
-
-        this.ok(ctx, body)
     }
 
     @Get('/latency')
-    async latency(ctx: Context) {
+    async latency() {
 
-        const body = this.stats.getLatency()
-
-        return this.ok(ctx, body)
+        return this.stats.getLatency()
     }
 
     @Get('/usage')
-    async usage(ctx: Context) {
+    async usage() {
 
         const body = await this.stats.getPidUsage()
-
-        this.ok(ctx, body)
+    
+        return body
     }
 
     @Get('/host')
-    async host(ctx: Context) {
+    async host() {
 
         const body = await this.stats.getHostUsage()
 
-        this.ok(ctx, body)
+        return body
     }
 }

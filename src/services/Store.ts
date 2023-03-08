@@ -1,14 +1,25 @@
-import { singleton } from 'tsyringe'
-import { Store as RxStore } from 'rxeta'
+import { apiConfig, websocketConfig } from "@configs"
+import { Store as RxStore } from "rxeta"
+import { singleton } from "tsyringe"
 
 interface State {
 
     authorizedAPITokens: string[]
+    ready: {
+        bot: boolean | null
+        api: boolean | null
+        websocket: boolean | null
+    }
 }
 
 const initialState: State = {
     
-    authorizedAPITokens: []
+    authorizedAPITokens: [],
+    ready: {
+        bot: false,
+        api: apiConfig.enabled ? false : null,
+        websocket: websocketConfig.enabled ? false : null,
+    }
 }
 
 @singleton()

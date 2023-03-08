@@ -1,8 +1,8 @@
-import { SlashOption as SlashOptionX, SlashOptionOptions as SlashOptionOptionsX } from "discordx"
 import { of } from "case"
+import { SlashOption as SlashOptionX, SlashOptionOptions as SlashOptionOptionsX, VerifyName } from "discordx"
 
 import { InvalidOptionName } from "@errors"
-import { constantPreserveDots, sanitizeLocales, setOptionsLocalization } from "@utils/functions"
+import { constantPreserveDots, sanitizeLocales, setFallbackDescription, setOptionsLocalization } from "@utils/functions"
 
 /**
  * Add a slash command option
@@ -44,7 +44,9 @@ import { constantPreserveDots, sanitizeLocales, setOptionsLocalization } from "@
         }
     }
 
-    return SlashOptionX(options as SlashOptionOptionsX)
+    if (!options.description) options = setFallbackDescription(options)
+
+    return SlashOptionX(options as SlashOptionOptionsX<VerifyName<string>, string>)
 }
 
 const isValidOptionName = (name: string) => {

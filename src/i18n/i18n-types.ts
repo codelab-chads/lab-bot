@@ -8,6 +8,8 @@ export type BaseLocale = 'en'
 export type Locales =
 	| 'en'
 	| 'fr'
+	| 'ru'
+	| 'uk'
 
 export type Translation = RootTranslation
 
@@ -16,41 +18,47 @@ export type Translations = RootTranslation
 type RootTranslation = {
 	GUARDS: {
 		/**
-		 * This command is currently desactivated.
+		 * T​h​i​s​ ​c​o​m​m​a​n​d​ ​i​s​ ​c​u​r​r​e​n​t​l​y​ ​d​i​s​a​b​l​e​d​.
 		 */
 		DISABLED_COMMAND: string
 		/**
-		 * This bot is currently in maintenance mode.
+		 * T​h​i​s​ ​b​o​t​ ​i​s​ ​c​u​r​r​e​n​t​l​y​ ​i​n​ ​m​a​i​n​t​e​n​a​n​c​e​ ​m​o​d​e​.
 		 */
 		MAINTENANCE: string
 		/**
-		 * This command can only be used in a server.
+		 * T​h​i​s​ ​c​o​m​m​a​n​d​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​u​s​e​d​ ​i​n​ ​a​ ​s​e​r​v​e​r​.
 		 */
 		GUILD_ONLY: string
 		/**
-		 * This command can only be used in a NSFW channel.
+		 * T​h​i​s​ ​c​o​m​m​a​n​d​ ​c​a​n​ ​o​n​l​y​ ​b​e​ ​u​s​e​d​ ​i​n​ ​a​ ​N​S​F​W​ ​c​h​a​n​n​e​l​.
 		 */
 		NSFW: string
 	}
 	ERRORS: {
 		/**
-		 * An unknown error occured.
+		 * A​n​ ​u​n​k​n​o​w​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d​.
 		 */
 		UNKNOWN: string
+	}
+	SHARED: {
+		/**
+		 * N​o​ ​d​e​s​c​r​i​p​t​i​o​n​ ​p​r​o​v​i​d​e​d​.
+		 */
+		NO_COMMAND_DESCRIPTION: string
 	}
 	COMMANDS: {
 		INVITE: {
 			/**
-			 * Invite the bot to your server!
+			 * I​n​v​i​t​e​ ​t​h​e​ ​b​o​t​ ​t​o​ ​y​o​u​r​ ​s​e​r​v​e​r​!
 			 */
 			DESCRIPTION: string
 			EMBED: {
 				/**
-				 * Invite me on your server!
+				 * I​n​v​i​t​e​ ​m​e​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​!
 				 */
 				TITLE: string
 				/**
-				 * [Click here]({link}) to invite me!
+				 * [​C​l​i​c​k​ ​h​e​r​e​]​(​{​l​i​n​k​}​)​ ​t​o​ ​i​n​v​i​t​e​ ​m​e​!
 				 * @param {unknown} link
 				 */
 				DESCRIPTION: RequiredParams<'link'>
@@ -58,28 +66,28 @@ type RootTranslation = {
 		}
 		PREFIX: {
 			/**
-			 * prefix
+			 * p​r​e​f​i​x
 			 */
 			NAME: string
 			/**
-			 * Change the prefix of the bot.
+			 * C​h​a​n​g​e​ ​t​h​e​ ​p​r​e​f​i​x​ ​o​f​ ​t​h​e​ ​b​o​t​.
 			 */
 			DESCRIPTION: string
 			OPTIONS: {
 				PREFIX: {
 					/**
-					 * new_prefix
+					 * n​e​w​_​p​r​e​f​i​x
 					 */
 					NAME: string
 					/**
-					 * The new prefix of the bot.
+					 * T​h​e​ ​n​e​w​ ​p​r​e​f​i​x​ ​o​f​ ​t​h​e​ ​b​o​t​.
 					 */
 					DESCRIPTION: string
 				}
 			}
 			EMBED: {
 				/**
-				 * Prefix changed to `{prefix}`.
+				 * P​r​e​f​i​x​ ​c​h​a​n​g​e​d​ ​t​o​ ​`​{​p​r​e​f​i​x​}​`​.
 				 * @param {string} prefix
 				 */
 				DESCRIPTION: RequiredParams<'prefix'>
@@ -87,12 +95,12 @@ type RootTranslation = {
 		}
 		MAINTENANCE: {
 			/**
-			 * Set the maintenance mode of the bot.
+			 * S​e​t​ ​t​h​e​ ​m​a​i​n​t​e​n​a​n​c​e​ ​m​o​d​e​ ​o​f​ ​t​h​e​ ​b​o​t​.
 			 */
 			DESCRIPTION: string
 			EMBED: {
 				/**
-				 * Maintenance mode set to `{state}`.
+				 * M​a​i​n​t​e​n​a​n​c​e​ ​m​o​d​e​ ​s​e​t​ ​t​o​ ​`​{​s​t​a​t​e​}​`​.
 				 * @param {string} state
 				 */
 				DESCRIPTION: RequiredParams<'state'>
@@ -100,51 +108,51 @@ type RootTranslation = {
 		}
 		STATS: {
 			/**
-			 * Get some stats about the bot.
+			 * G​e​t​ ​s​o​m​e​ ​s​t​a​t​s​ ​a​b​o​u​t​ ​t​h​e​ ​b​o​t​.
 			 */
 			DESCRIPTION: string
 			HEADERS: {
 				/**
-				 * Commands
+				 * C​o​m​m​a​n​d​s
 				 */
 				COMMANDS: string
 				/**
-				 * Guild
+				 * G​u​i​l​d
 				 */
 				GUILDS: string
 				/**
-				 * Active Users
+				 * A​c​t​i​v​e​ ​U​s​e​r​s
 				 */
 				ACTIVE_USERS: string
 				/**
-				 * Users
+				 * U​s​e​r​s
 				 */
 				USERS: string
 			}
 		}
 		HELP: {
 			/**
-			 * Get global help about the bot and its commands
+			 * G​e​t​ ​g​l​o​b​a​l​ ​h​e​l​p​ ​a​b​o​u​t​ ​t​h​e​ ​b​o​t​ ​a​n​d​ ​i​t​s​ ​c​o​m​m​a​n​d​s
 			 */
 			DESCRIPTION: string
 			EMBED: {
 				/**
-				 * Help pannel
+				 * H​e​l​p​ ​p​a​n​e​l
 				 */
 				TITLE: string
 				/**
-				 * {category} Commands
+				 * {​c​a​t​e​g​o​r​y​}​ ​C​o​m​m​a​n​d​s
 				 * @param {string} category
 				 */
 				CATEGORY_TITLE: RequiredParams<'category'>
 			}
 			SELECT_MENU: {
 				/**
-				 * Select a category
+				 * S​e​l​e​c​t​ ​a​ ​c​a​t​e​g​o​r​y
 				 */
 				TITLE: string
 				/**
-				 * {category} commands
+				 * {​c​a​t​e​g​o​r​y​}​ ​c​o​m​m​a​n​d​s
 				 * @param {string} category
 				 */
 				CATEGORY_DESCRIPTION: RequiredParams<'category'>
@@ -152,11 +160,11 @@ type RootTranslation = {
 		}
 		PING: {
 			/**
-			 * Pong!
+			 * P​o​n​g​!
 			 */
 			DESCRIPTION: string
 			/**
-			 * {member} Pong! The message round-trip took {time}ms.{heartbeat}
+			 * {​m​e​m​b​e​r​}​ ​P​o​n​g​!​ ​T​h​e​ ​m​e​s​s​a​g​e​ ​r​o​u​n​d​-​t​r​i​p​ ​t​o​o​k​ ​{​t​i​m​e​}​m​s​.​{​h​e​a​r​t​b​e​a​t​}
 			 * @param {string} heartbeat
 			 * @param {string} member
 			 * @param {number} time
@@ -169,7 +177,7 @@ type RootTranslation = {
 export type TranslationFunctions = {
 	GUARDS: {
 		/**
-		 * This command is currently desactivated.
+		 * This command is currently disabled.
 		 */
 		DISABLED_COMMAND: () => LocalizedString
 		/**
@@ -187,9 +195,15 @@ export type TranslationFunctions = {
 	}
 	ERRORS: {
 		/**
-		 * An unknown error occured.
+		 * An unknown error occurred.
 		 */
 		UNKNOWN: () => LocalizedString
+	}
+	SHARED: {
+		/**
+		 * No description provided.
+		 */
+		NO_COMMAND_DESCRIPTION: () => LocalizedString
 	}
 	COMMANDS: {
 		INVITE: {
@@ -279,7 +293,7 @@ export type TranslationFunctions = {
 			DESCRIPTION: () => LocalizedString
 			EMBED: {
 				/**
-				 * Help pannel
+				 * Help panel
 				 */
 				TITLE: () => LocalizedString
 				/**

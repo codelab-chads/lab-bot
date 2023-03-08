@@ -1,8 +1,7 @@
-import { GatewayIntentBits, Partials } from 'discord.js'
+import { GatewayIntentBits, Partials } from "discord.js"
 
-import { ExtractLocale, Maintenance, NotBot } from '@guards'
-
-import { generalConfig, logsConfig } from '@config'
+import { generalConfig, logsConfig } from "@configs"
+import { ExtractLocale, Maintenance, NotBot, RequestContextIsolator } from "@guards"
 
 export const clientConfig = {
 	
@@ -16,7 +15,9 @@ export const clientConfig = {
 		GatewayIntentBits.GuildMessages,
 		GatewayIntentBits.GuildMessageReactions,
 		GatewayIntentBits.GuildVoiceStates,
-		GatewayIntentBits.DirectMessages
+		GatewayIntentBits.GuildPresences,
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.MessageContent
 	],
 
 	partials: [
@@ -27,6 +28,7 @@ export const clientConfig = {
 	silent: !logsConfig.debug,
 
 	guards: [
+		RequestContextIsolator,
 		NotBot,
 		Maintenance,
 		ExtractLocale

@@ -1,18 +1,18 @@
-import { injectable } from "tsyringe"
-import { Client } from "discordx"
 import { Category } from "@discordx/utilities"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction, EmbedBuilder, EmbedField } from "discord.js"
-import relativeTime from 'dayjs/plugin/relativeTime'
-import dayjs from 'dayjs'
+import { Client } from "discordx"
+import { injectable } from "tsyringe"
 dayjs.extend(relativeTime)
 
+import { generalConfig } from "@configs"
 import { Discord, Slash } from "@decorators"
 import { Guard } from "@guards"
-import { formatDate, getColor, isValidUrl, timeAgo } from "@utils/functions"
-import { generalConfig } from "@config"
 import { Stats } from "@services"
+import { getColor, getTscordVersion, isValidUrl, timeAgo } from "@utils/functions"
 
-import packageJSON from '../../../package.json'
+import packageJson from "../../../package.json"
 
 const links = [
 	{ label: 'Invite me!', url: generalConfig.links.invite },
@@ -47,14 +47,14 @@ export default class InfoCommand {
 			.setTitle(client.user!.tag)
 			.setThumbnail(client.user!.displayAvatarURL())
 			.setColor(getColor('primary'))
-			.setDescription(packageJSON.description)
+			.setDescription(packageJson.description)
 
 		const fields: EmbedField[] = []
 
 		/**
 		 * Owner field
 		 */
-		const owner = await client.users.fetch(generalConfig.ownerId)
+		const owner = await client.users.fetch(generalConfig.ownerId).catch(() => null)
 		if (owner) {
 			fields.push({
 				name: 'Owner',
@@ -88,7 +88,7 @@ export default class InfoCommand {
 		 */
 		fields.push({
 			name: 'Bot version',
-			value: `v${packageJSON.version}`,
+			value: `v${packageJson.version}`,
 			inline: true,
 		})
 
@@ -97,7 +97,7 @@ export default class InfoCommand {
 		 */
 		fields.push({
 			name: 'Framework/template',
-			value: `[TSCord](https://github.com/barthofu/tscord) (*v${generalConfig.__templateVersion}*)`,
+			value: `[TSCord](https://github.com/barthofu/tscord) (*v${getTscordVersion()}*)`,
 			inline: true,
 		})
 
@@ -106,7 +106,7 @@ export default class InfoCommand {
 		 */
 		fields.push({
 			name: 'Libraries',
-			value: `[discord.js](https://discord.js.org/) (*v${packageJSON.dependencies['discord.js'].replace('^', '')}*)\n[discordx](https://discordx.js.org/) (*v${packageJSON.dependencies['discordx'].replace('^', '')}*)`,
+			value: `[discord.js](https://discord.js.org/) (*v${packageJson.dependencies['discord.js'].replace('^', '')}*)\n[discordx](https://discordx.js.org/) (*v${packageJson.dependencies['discordx'].replace('^', '')}*)`,
 			inline: true,
 		})
 
@@ -130,7 +130,7 @@ export default class InfoCommand {
 		const row = new ActionRowBuilder<ButtonBuilder>()
 			.addComponents(...buttons)
 		
-		// finaly send the embed
+		// finally send the embed
 		interaction.followUp({
 			embeds: [embed],
 			components: [row],

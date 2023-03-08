@@ -1,81 +1,74 @@
-import { Get, Middleware, Post, Router } from "@discordx/koa"
+import { BodyParams, Controller, Get, Post, UseBefore } from "@tsed/common"
+import { InternalServerError } from "@tsed/exceptions"
+import { Required } from "@tsed/schema"
 import { injectable } from "tsyringe"
-import { Context } from "koa"
-import { Joi } from "koa-context-validator"
 
+import { Authenticated } from "@api/middlewares"
+import { databaseConfig } from "@configs"
 import { Database } from "@services"
 import { BaseController } from "@utils/classes"
-import { formatDate } from "@utils/functions"
+import { formatDate, resolveDependencies } from "@utils/functions"
 
-import { databaseConfig } from "@config"
-import { authenticated, validator } from "@api/middlewares"
-
-@Router({ options: { prefix: "/database" } })
-@Middleware(
-    authenticated
+@Controller('/database')
+@UseBefore(
+    Authenticated
 )
 @injectable()
 export class DatabaseController extends BaseController {
 
-    constructor(
-        private readonly db: Database
-    ) {
+    private db: Database
+
+    constructor() {
         super()
+
+        resolveDependencies([Database]).then(([db]) => {
+            this.db = db
+        })
     }
 
     @Post('/backup')
-    async generateBackup(ctx: Context) {
+    async generateBackup() {
 
         const snapshotName = `snapshot-${formatDate(new Date(), 'onlyDateFileName')}-manual-${Date.now()}`
         const success = await this.db.backup(snapshotName)
 
-        if (success) this.ok(ctx, { 
-            message: "Backup generated",
-            data: {
-                snapshotName
+        if (success) {
+            return { 
+                message: 'Backup generated',
+                data: {
+                    snapshotName: snapshotName + '.txt'
+                }
             }
-        })
-        else this.error(ctx, "Couldn't generate backup, see the logs for more informations", 500)
-
+        }
+        else throw new InternalServerError("Couldn't generate backup, see the logs for more information")
     }
 
     @Post('/restore')
-    @Middleware(
-        validator({
-            body: Joi.object().keys({
-                snapshotName: Joi.string().required()
-            })
-        })
-    )
-    async restoreBackup(ctx: Context) {
+    async restoreBackup(
+        @Required() @BodyParams('snapshotName') snapshotName: string,
+    ) {
         
-        const data = <{ snapshotName: string }>ctx.request.body
+        const success = await this.db.restore(snapshotName)
 
-        const success = await this.db.restore(data.snapshotName)
-
-        if (success) this.ok(ctx, { message: "Backup restored" })
-        else this.error(ctx, "Couldn't restore backup, see the logs for more informations", 500)
+        if (success) return { message: "Backup restored" }
+        else throw new InternalServerError("Couldn't restore backup, see the logs for more information")
     }
 
-    @Get('/backup/list')
-    async getBackupList(ctx: Context) {
+    @Get('/backups')
+    async getBackups() {
 
         const backupPath = databaseConfig.backup.path
-        if (!backupPath) {
-            return this.error(ctx, "Couldn't list backups, see the logs for more informations", 500)
-        }
+        if (!backupPath) throw new InternalServerError("Backup path not set, couldn't find backups")
 
         const backupList = this.db.getBackupList()
 
-        if (backupList) this.ok(ctx, backupList)
-        else this.error(ctx, "Couldn't list backups, see the logs for more informations", 500)
+        if (backupList) return backupList
+        else throw new InternalServerError("Couldn't get backup list, see the logs for more information")
     }
 
     @Get('/size')
-    async size(ctx: Context) {
+    async size() {
 
-        const size = await this.db.getSize()
-
-        this.ok(ctx, size)
+        return await this.db.getSize()
     }
 }

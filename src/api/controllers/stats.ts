@@ -1,31 +1,32 @@
-import { injectable } from "tsyringe"
-import { Get, Middleware, Router } from "@discordx/koa"
-import { Joi } from "koa-context-validator"
-import { Context } from "koa"
+import { Controller, Get, QueryParams, UseBefore } from "@tsed/common"
 
-import { BaseController } from "@utils/classes"
+import { Authenticated } from "@api/middlewares"
 import { Stats } from "@services"
-import { authenticated, validator } from "@api/middlewares"
+import { BaseController } from "@utils/classes"
+import { resolveDependencies } from "@utils/functions"
 
-@Router({ options: { prefix: '/stats' }})
-@Middleware(
-    authenticated
+@Controller('/stats')
+@UseBefore(
+    Authenticated
 )
-@injectable()
 export class StatsController extends BaseController {
 
-    constructor(
-        private readonly stats: Stats,
-    ) {
+    private stats: Stats
+
+    constructor() {
         super()
+
+        resolveDependencies([Stats]).then(([stats]) => {
+            this.stats = stats
+        })
     }
 
     @Get('/totals')
-    async info(ctx: Context) {
+    async info() {
 
         const totalStats = await this.stats.getTotalStats()
 
-        const body = {
+        return {
             stats: {
                 totalUsers: totalStats.TOTAL_USERS,
                 totalGuilds: totalStats.TOTAL_GUILDS,
@@ -33,31 +34,25 @@ export class StatsController extends BaseController {
                 totalCommands: totalStats.TOTAL_COMMANDS,
             }
         }
-
-        this.ok(ctx, body)
     }
 
-    @Get('/lastInteraction')
-    async lastInteraction(ctx: Context) {
+    @Get('/interaction/last')
+    async lastInteraction() {
 
         const lastInteraction = await this.stats.getLastInteraction()
-
-        this.ok(ctx, lastInteraction)
+        return lastInteraction
     }
 
-    @Get('/commandsUsage')
-    @Middleware(
-        validator({
-            query: Joi.object().keys({
-                numberOfDays: Joi.number().default(7)
-            })
-        })
-    )
-    async commandsUsage(ctx: Context) {
-        
-        const data = <{ numberOfDays: string }>ctx.request.query
-        const numberOfDays = parseInt(data.numberOfDays)
+    @Get('/guilds/last')
+    async lastGuildAdded() {
 
+        const lastGuild = await this.stats.getLastGuildAdded()
+        return lastGuild
+    }
+
+    @Get('/commands/usage')
+    async commandsUsage(@QueryParams('numberOfDays') numberOfDays: number = 7) {
+        
         const commandsUsage = {
             slashCommands: await this.stats.countStatsPerDays('CHAT_INPUT_COMMAND_INTERACTION', numberOfDays),
             simpleCommands: await this.stats.countStatsPerDays('SIMPLE_COMMAND_MESSAGE', numberOfDays),
@@ -75,53 +70,41 @@ export class StatsController extends BaseController {
             })
         }
 
-        this.ok(ctx, body)
+        return body
     }
 
-    @Get('/topCommands')
-    async topCommands(ctx: Context) {
+    @Get('/commands/top')
+    async topCommands() {
 
         const topCommands = await this.stats.getTopCommands()
 
-        this.ok(ctx, topCommands)
+        return topCommands
     }
 
-    @Get('/usersActivity')
-    async usersActivity(ctx: Context) {
+    @Get('/users/activity')
+    async usersActivity() {
 
         const usersActivity = await this.stats.getUsersActivity()
 
-        this.ok(ctx, usersActivity)
+        return usersActivity
     }
 
-    @Get('/topGuilds')
-    async topGuilds(ctx: Context) {
+    @Get('/guilds/top')
+    async topGuilds() {
 
         const topGuilds = await this.stats.getTopGuilds()
 
-        this.ok(ctx, topGuilds)
+        return topGuilds
     }
 
     @Get('/usersAndGuilds')
-    @Middleware(
-        validator({
-            query: Joi.object().keys({
-                numberOfDays: Joi.number().default(7)
-            })
-        })
-    )
-    async usersAndGuilds(ctx: Context) {
+    async usersAndGuilds(@QueryParams('numberOfDays') numberOfDays: number = 7) {
 
-        const data = <{ numberOfDays: string }>ctx.request.query
-        const numberOfDays = parseInt(data.numberOfDays)
-
-        const body = {
+        return {
             activeUsers: await this.stats.countStatsPerDays('TOTAL_ACTIVE_USERS', numberOfDays),
             users: await this.stats.countStatsPerDays('TOTAL_USERS', numberOfDays),
             guilds: await this.stats.countStatsPerDays('TOTAL_GUILDS', numberOfDays),
         }
-
-        this.ok(ctx, body)
     }
 
 }

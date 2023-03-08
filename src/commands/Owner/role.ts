@@ -1,5 +1,5 @@
 import { Category } from "@discordx/utilities"
-import { CommandInteraction, SelectMenuInteraction, Role as DRole } from "discord.js"
+import { CommandInteraction, StringSelectMenuInteraction, Role as DRole } from "discord.js"
 import { Client, SelectMenuComponent, SlashChoice, SlashOption } from "discordx"
 
 import { Discord, Slash } from "@decorators"
@@ -19,7 +19,7 @@ export default class RoleCommand {
 
 	@SelectMenuComponent({ id: 'prog-role-add' })
 	@SelectMenuComponent({ id: 'sector-role-add' })
-	async addRoles(interaction: SelectMenuInteraction) {
+	async addRoles(interaction: StringSelectMenuInteraction) {
 
 		this.editRoles('add', interaction)
 	}
@@ -27,13 +27,13 @@ export default class RoleCommand {
 
 	@SelectMenuComponent({ id: 'prog-role-remove' })
 	@SelectMenuComponent({ id: 'sector-role-remove' })
-	async removeRoles(interaction: SelectMenuInteraction) {
+	async removeRoles(interaction: StringSelectMenuInteraction) {
 
 		this.editRoles('remove', interaction)
 	}
 
 
-	private async editRoles(type: 'add' | 'remove', interaction: SelectMenuInteraction) {
+	private async editRoles(type: 'add' | 'remove', interaction: StringSelectMenuInteraction) {
 
 		const roles = interaction.values
 			.map(roleId => interaction.guild?.roles.cache.get(roleId))
@@ -61,7 +61,6 @@ export default class RoleCommand {
 	async update(
 		@SlashChoice({ name: 'Programming Language', value: 'programmingLanguages' })
 		@SlashChoice({ name: 'Sector', value: 'sector' }) 
-		@SlashOption({ name: 'type' })
 		type: 'programmingLanguages' | 'sector',
 		interaction: CommandInteraction,
 		client: Client,

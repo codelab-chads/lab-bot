@@ -39,6 +39,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "''",
           "mappedType": "text"
         }
       },
@@ -104,6 +105,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "false",
           "mappedType": "integer"
         },
         "last_interact": {
@@ -172,8 +174,36 @@
           "nullable": false,
           "mappedType": "text"
         },
+        "base_path": {
+          "name": "base_path",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "''",
+          "mappedType": "text"
+        },
         "url": {
           "name": "url",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "text"
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
+        },
+        "tags": {
+          "name": "tags",
           "type": "text",
           "unsigned": false,
           "autoincrement": false,
@@ -198,15 +228,6 @@
           "primary": false,
           "nullable": false,
           "mappedType": "text"
-        },
-        "size": {
-          "name": "size",
-          "type": "integer",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
         }
       },
       "name": "image",
@@ -251,6 +272,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "-1",
           "mappedType": "integer"
         },
         "created_at": {
@@ -306,6 +328,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "''",
           "mappedType": "text"
         },
         "additional_data": {

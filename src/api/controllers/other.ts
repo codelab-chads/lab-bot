@@ -1,16 +1,13 @@
-import { injectable } from "tsyringe"
-import { Get, Router } from "@discordx/koa"
-import { Context } from "koa"
+import { Controller, Get } from "@tsed/common"
 
 import { BaseController } from "@utils/classes"
 
-@Router()
-@injectable()
-export class HealthController extends BaseController {
+@Controller('/')
+export class OtherController extends BaseController {
 
-    @Get('/')
-    async index(ctx: Context) {
+    @Get()
+    async status() {
 
-        this.ok(ctx, 'API server is running')
+        return 'API server is running'
     }
 }

@@ -1,13 +1,12 @@
-import { Client } from 'discordx'
-import { injectable } from 'tsyringe'
-import { ActivityType } from 'discord.js'
+import { ActivityType } from "discord.js"
+import { Client } from "discordx"
+import { injectable } from "tsyringe"
 
-import { Data } from '@entities'
-import { generalConfig, logsConfig } from '@config'
-import { Once, Discord, Schedule } from '@decorators'
-import { Database, Logger, Scheduler } from '@services'
-import { syncAllGuilds, waitForDependency } from '@utils/functions'
-
+import { generalConfig, logsConfig } from "@configs"
+import { Discord, Once, Schedule } from "@decorators"
+import { Data } from "@entities"
+import { Database, Logger, Scheduler, Store } from "@services"
+import { resolveDependency, syncAllGuilds } from "@utils/functions"
 
 @Discord()
 @injectable()
@@ -16,7 +15,8 @@ export default class ReadyEvent {
     constructor(
         private db: Database,
         private logger: Logger,
-        private scheduler: Scheduler
+        private scheduler: Scheduler,
+        private store: Store
     ) {}
 
     private activityIndex = 0
@@ -30,30 +30,17 @@ export default class ReadyEvent {
         // synchronize applications commands with Discord
         await client.initApplicationCommands({
             global: {
-                log: logsConfig.debug,
                 disable: {
                     delete: false
                 }
-            },
-            guild: {
-                log: logsConfig.debug
             }
         })
-
-        // synchronize applications command permissions with Discord
-        /**
-         * ************************************************************
-         * Discord has deprecated permissions v1 api in favour permissions v2, await future updates
-         * see https://github.com/discordjs/discord.js/pull/7857
-         * ************************************************************
-         */
-        //await client.initApplicationPermissions(false)
 
         // change activity
         await this.changeActivity()
 
         // update last startup time in the database
-        await this.db.getRepo(Data).set('lastStartup', Date.now())
+        await this.db.get(Data).set('lastStartup', Date.now())
 
         // start scheduled jobs
         this.scheduler.startAllJobs()
@@ -61,29 +48,32 @@ export default class ReadyEvent {
         // log startup
         await this.logger.logStartingConsole()
 
-        // syncrhonize guilds between discord and the database
+        // synchronize guilds between discord and the database
         await syncAllGuilds(client)
+
+        // the bot is fully ready
+        this.store.update('ready', (e) => ({ ...e, bot: true }))
     }
 
     @Schedule('*/15 * * * * *') // each 15 seconds
     async changeActivity() {
+
         const ActivityTypeEnumString = ["PLAYING", "STREAMING", "LISTENING", "WATCHING", "CUSTOM", "COMPETING"] // DO NOT CHANGE THE ORDER
 
-        const client = await waitForDependency(Client)
+        const client = await resolveDependency(Client)
         const activity = generalConfig.activities[this.activityIndex]
         
         activity.text = eval(`new String(\`${activity.text}\`).toString()`)
             
-        if (activity.type === 'STREAMING') {
-            //streaming activity
+        if (activity.type === 'STREAMING') { //streaming activity
             
             client.user?.setStatus('online')
             client.user?.setActivity(activity.text, {
                 'url': 'https://www.twitch.tv/discord',
                 'type': ActivityType.Streaming
             })
-        } else {
-            //other activities
+
+        } else { //other activities
             
             client.user?.setActivity(activity.text, {
                 type: ActivityTypeEnumString.indexOf(activity.type)
@@ -92,6 +82,5 @@ export default class ReadyEvent {
 
         this.activityIndex++
         if (this.activityIndex === generalConfig.activities.length) this.activityIndex = 0
-
     }
 }

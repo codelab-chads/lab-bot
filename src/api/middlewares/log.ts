@@ -1,26 +1,36 @@
-import { container } from "tsyringe"
+import { Context, Middleware, PlatformContext } from "@tsed/common"
 import chalk from "chalk"
-import { Context, Next } from "koa"
 
 import { Logger } from "@services"
+import { resolveDependency } from "@utils/functions"
 
-const logger = container.resolve(Logger)
+@Middleware()
+export class Log {
 
-export async function globalLog(ctx: Context, next: Next) {
+    private logger: Logger
 
-    // don't log anything if the request has a `logIgnore` query params
-    if (!ctx.query.logIgnore) {
-        const { method, url } = ctx.request
-
-        const message = `(API) ${method} - ${url}`
-        const chalkedMessage = `(${chalk.bold.white('API')}) ${chalk.bold.green(method)} - ${chalk.bold.blue(url)}`
-
-        logger.console('info', chalkedMessage)
-        logger.file('info', message)
-        
-    } else {
-        delete ctx.query.logIgnore
+    constructor() {
+        resolveDependency(Logger).then((logger) => {
+            this.logger = logger
+        })
     }
 
-    return next()
+    use(@Context() { request }: PlatformContext) {
+        
+        // don't log anything if the request has a `logIgnore` query param
+        if (!request.query.logIgnore) {
+
+            const { method, url } = request
+
+            const message = `(API) ${method} - ${url}`
+            const chalkedMessage = `(${chalk.bold.white('API')}) ${chalk.bold.green(method)} - ${chalk.bold.blue(url)}`
+
+            this.logger.console(chalkedMessage)
+            this.logger.file(message)
+            
+        } else {
+            delete request.query.logIgnore
+        }
+    }
+
 }
